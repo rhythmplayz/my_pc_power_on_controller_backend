@@ -24,6 +24,13 @@ DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 # Allow the default local host and the future Render domain name string
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '.onrender.com']
 
+# For local testing, allow your frontend to communicate freely
+CORS_ALLOW_ALL_ORIGINS = True 
+
+# Alternatively, when you deploy to Render, you will use this instead:
+# CORS_ALLOWED_ORIGINS = [
+#     "https://your-frontend-domain.onrender.com",
+# ]
 
 # Application definition
 
@@ -34,12 +41,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
     'rest_framework',
     'rest_framework.authtoken',
     'pc_control',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -73,12 +82,23 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASES = {
-    'default': dj_database_url.config(
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
-        conn_max_age=600
-    )
-}
+if os.environ.get('RENDER'):
+    # Force SQLite to save inside Render's persistent disk directory location
+    DB_DIR = '/data'
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(DB_DIR, 'db.sqlite3'),
+        }
+    }
+else:
+    # Local fallback for development on your PC
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Password validation

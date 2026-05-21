@@ -7,6 +7,7 @@ from .models import PCController
 from .serializers import RegisterSerializer, PCControllerSerializer
 from .permissions import IsVerifiedUser
 from django.contrib.auth.models import User
+from rest_framework.authentication import TokenAuthentication
 
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -39,7 +40,9 @@ class FrontendControllerView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class ESP32PingView(APIView):
-    permission_classes = [AllowAny] # Simple approach; add Token auth if encryption is needed later
+    # Enforce token validation and require the user to be active/verified
+    authentication_classes = [TokenAuthentication] 
+    permission_classes = [IsAuthenticated, IsVerifiedUser]
 
     def get(self, request):
         controller, _ = PCController.objects.get_or_create(id=1)
@@ -50,7 +53,7 @@ class ESP32PingView(APIView):
         # Capture the permission bit to send back before updating values
         permission_signal = 1 if controller.is_permitted else 0
         
-        # Auto-reset pattern: Once read, clear permission back to 0 so it won't repeatedly trigger power cycles
+        # Auto-reset pattern: Once read, clear permission back to 0
         if controller.is_permitted:
             controller.is_permitted = False
             
