@@ -34,7 +34,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'a-safe-fallback-for-local-dev')
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost', 'https://my-pc-power-on-controller-backend.onrender.com').split(',')
 
 
 
