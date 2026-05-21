@@ -8,20 +8,26 @@ python manage.py migrate
 
 python manage.py shell <<EOF
 import os
-import json
 from django.core.management import call_command
-from io import StringIO
 
 data_dump = os.environ.get('INITIAL_DATA_DUMP')
-if data_dump:
+if data_dump and len(data_dump) > 5:
     print("Found secure data dump environment variable. Processing import...")
     try:
-        # Pass the raw text string into Django's loaddata engine natively
-        data_stream = StringIO(data_dump)
-        call_command('loaddata', '-', format='json', stdin=data_stream)
+        # Create a temporary local file on Render's build environment
+        temp_filename = 'temp_prod_dump.json'
+        with open(temp_filename, 'w', encoding='utf-8') as f:
+            f.write(data_dump)
+        
+        # Load the file securely using standard Django utility pathways
+        call_command('loaddata', temp_filename)
         print("Secure data migration complete!")
+        
+        # Clean up and destroy the temporary file immediately for absolute security
+        os.remove(temp_filename)
+        print("Temporary migration files purged successfully.")
     except Exception as e:
         print(f"Migration error: {e}")
 else:
-    print("No data dump environment variable found. Skipping.")
+    print("No data dump environment variable found or string format empty. Skipping.")
 EOF
