@@ -24,13 +24,9 @@ DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 # Allow the default local host and the future Render domain name string
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '.onrender.com']
 
-# For local testing, allow your frontend to communicate freely
-CORS_ALLOW_ALL_ORIGINS = True 
-
-# Alternatively, when you deploy to Render, you will use this instead:
-# CORS_ALLOWED_ORIGINS = [
-#     "https://your-frontend-domain.onrender.com",
-# ]
+CORS_ALLOWED_ORIGINS = [
+    "https://pc-power-portal.onrender.com",
+]
 
 # Application definition
 
@@ -84,16 +80,17 @@ WSGI_APPLICATION = 'core.wsgi.application'
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
-if DATABASE_URL:
+# Check if DATABASE_URL exists and is longer than just a broken string
+if DATABASE_URL and len(DATABASE_URL) > 5:
     DATABASES = {
         'default': dj_database_url.config(
             default=DATABASE_URL,
-            conn_max_age=600, # Keeps connections warm for faster API response times
-            ssl_require=True  # Render requires SSL encryption connections
+            conn_max_age=600,
+            ssl_require=True
         )
     }
 else:
-    # Local fallback for development on your home PC
+    # Safe fallback if Render environment variables aren't loaded yet
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
