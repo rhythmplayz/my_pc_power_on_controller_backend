@@ -82,17 +82,18 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-if os.environ.get('RENDER'):
-    # Force SQLite to save inside Render's persistent disk directory location
-    DB_DIR = '/data'
+DATABASE_URL = os.environ.get('DATABASE_URL')
+
+if DATABASE_URL:
     DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': os.path.join(DB_DIR, 'db.sqlite3'),
-        }
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600, # Keeps connections warm for faster API response times
+            ssl_require=True  # Render requires SSL encryption connections
+        )
     }
 else:
-    # Local fallback for development on your PC
+    # Local fallback for development on your home PC
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
